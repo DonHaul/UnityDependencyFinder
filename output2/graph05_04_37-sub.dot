@@ -1,0 +1,6 @@
+digraph  {
+	graph [nodesep=0.25,
+		ranksep=5.0
+	];
+	DetectCollision -> JoinTheDots;
+}

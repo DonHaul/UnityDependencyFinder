@@ -1,0 +1,29 @@
+digraph  {
+	graph [nodesep=0.25,
+		ranksep=5.0
+	];
+	JoinTheDots -> GeneralManagerv2;
+	JoinTheDots -> GameRecnMake;
+	JoinTheDots -> Animater;
+	DetectCollision -> JoinTheDots;
+	GeneralManagerv2 -> GeneralManagerv2;
+	GeneralManagerv2 -> GameRecnMake;
+	GeneralManagerv2 -> AvatarData;
+	GeneralManagerv2 -> AvatarMaster;
+	GeneralManagerv2 -> GeneralUIManager;
+	GameRecnMake -> GeneralManagerv2;
+	GameRecnMake -> GameRecnMake;
+	GameRecnMake -> Animater;
+	GameRecnMake -> Animercise;
+	GameRecnMake -> AnimerciseAsset;
+	GameRecnMake -> Bonifier;
+	Animater -> Animater;
+	GeneralUIManager -> GeneralManagerv2;
+	GameManager10 -> GeneralManagerv2;
+	TrajectoryTrackerSuper -> GameRecnMake;
+	TrajectoryLineGenner -> GameRecnMake;
+	TrajectoryLineGenner -> Animater;
+	GameManagerSwordTest -> GameRecnMake;
+	GameRecnMakeEditor -> GameRecnMake;
+	TrajectoryTracker2 -> Animater;
+}

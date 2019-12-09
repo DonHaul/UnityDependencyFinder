@@ -1,0 +1,4 @@
+digraph G {
+node [color=lightgray, fontname=Courier, fontsize=10, shape=box, style=filled];
+me2 -> ola;
+}
