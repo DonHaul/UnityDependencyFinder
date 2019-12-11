@@ -1,57 +1,37 @@
+#generates full dependencies graph, in dots and pdf
+
 import os
-
-fileextension=".cs"
-
-projectDirectory = "/media/ramiro/DATA/User/Desktop/InMotion/Inmotion--Jogo/InMotion_GameFiles/Assets"
-
-excludedDirectories = ["Library","UniGLTF","Assets\\Orbbec\\Scripts"]
-
 import datetime
-
+import helper
 import pygraphviz as pgv
-G=pgv.AGraph(strict=False,directed=True)
+import Flags
+
+
+
+timenow = datetime.datetime.now().strftime("%H_%M_%S")
+
+def SaveGraph2(graph,path,name,layout="dot"):
+
+    if os.path.exists("output/graph%s"%timenow) == False:
+        os.mkdir("output/graph%s"%timenow) 
+
+    graph.write('output/graph%s/%s.dot' % (timenow,name))
+    graph.layout(layout)
+    graph.draw('output/graph%s/%s.pdf' % (timenow,name))
+
+
 
 def SaveGraph(graph,name,layout="sfdp"):
     graph.write('output/graph%s-%s.dot' % (datetime.datetime.now().strftime("%H_%M_%S"),name))
     graph.layout(layout)
     graph.draw('output/graph%s-%s.pdf' % (datetime.datetime.now().strftime("%H_%M_%S"),name))
 
-def getFiles(dir):
-    allFiless=[]
-    allNames = []
-    #goes trhoug all files
-    for path, subdirs, files in os.walk(dir):
-        for name in files:
-
-            if name.endswith(fileextension):
-                
-                inExcluded = False
-
-                for excluded in excludedDirectories:
-                    if excluded in path:
-
-                        inExcluded = True
-
-                if not inExcluded:
-                    allFiless.append(os.path.join(path, name))
-                    #print(os.path.join(path, name))
-                    allNames.append(name[0:len(name)-3])
+    print("Saved in:",'output/graph%s-%s.dot' % (datetime.datetime.now().strftime("%H_%M_%S"),name) )
 
 
-    return allFiless, allNames
-
-allTheFiles, allTheNames = getFiles(projectDirectory)
 
 
-print("%d files found" % len(allTheFiles))
 
-#for name in allTheNames:
-    
-#    g.add_node(pydot.Node(name))
-
-#generate graph
-
-lol=0
 
 def bfs(graph,node, depth):
     
@@ -84,133 +64,140 @@ def updateNode(name, attrs):
     g.add_node(n)
 
 
-if "Animercise" in allTheNames:
-    print("IT IS THEE")
+def clearcomments(data):
 
-edgecounter=0
-for fullpath, name in zip(allTheFiles,allTheNames):
-    with open(fullpath,encoding="latin-1") as file:
-        lol=lol+1
-        #print(lol)
- 
-        #print(fullpath) 
-        data = file.read() 
+    return data
+
+def parsedata(data):
+
+    dataaux = data.replace('.',' . ')
+    dataaux = dataaux.replace('=',' = ')
+    dataaux = dataaux.replace(')',' ) ')
+    dataaux = dataaux.replace('<',' < ')
+    dataaux = dataaux.replace('>',' > ')
+    dataaux = dataaux.replace(';',' ; ')       
         
-        dataaux = data.replace('.',' ')
-        dataaux = dataaux.replace('=',' ')
-        dataaux = dataaux.replace(')',' ')
-        dataaux = dataaux.replace('<',' ')
-        dataaux = dataaux.replace('>',' ')
-        dataaux = dataaux.replace(';',' ')
+    dataaux = dataaux.split(' ')
 
-        
-        
-        dataarr = dataaux.split()
+    return dataaux
 
-        nodeedges=0
+def main():
+    edgecounter=0
 
-        G.add_node(name,shape="box")
+    flags = Flags.Flags()
+
+    counts={}
 
 
-        #if name=="GameRecnMake":
-        #    print(dataarr)
-        #    if("Animater" in dataarr):
-        #        print("WTFF")
+    fileextension=".cs"
 
+    projectDirectory = "/media/ramiro/DATA/User/Desktop/InMotion/Inmotion--Jogo/InMotion_GameFiles/Assets"
 
-        #find any references to other scripts
-        for othername in allTheNames:
+    excludedDirectories = ["Library","UniGLTF","Assets\\Orbbec\\Scripts"]
+    G=pgv.AGraph(strict=False,directed=True)
 
+    #timenow= datetime.datetime.now().strftime("%H_%M_%S")
+    allTheFiles, allTheNames = helper.getFiles(projectDirectory,ext=fileextension,excludedDirectories=excludedDirectories,remove_extension=True)
+    print("%d files found" % len(allTheFiles))
+  
 
-            count = dataarr.count(othername)
+    for fullpath, name in zip(allTheFiles,allTheNames):
 
-            hasaway=False
+        #print(name)
 
-            #dont count if is self
-            if name == othername:
-                count = count - 1
+        with open(fullpath,encoding="latin-1") as file:
 
-            #dont count if is parent class
-            if data.find(": %s" % othername)>-1:
-                #count = count - 1
-                hasaway=True
-
-            #font count if is interface
-            if data.find(", %s" % othername)>-1:
-                #count = count - 1
-                hasaway=True
+            data = file.read() 
             
+            #put into array
+            dataarr = helper.parsedata(data)
+
+            nodeedges=0
+
+            G.add_node(name,shape="box")
+
+            flags.reset()
+
+            parents =  []
             
-
-            #dont count and change color if it is static instance
-            if data.find("public static %s instance" % othername)>-1:
-                count = count - 1
-                G.get_node(name).attr['color']= "blue"  
+            counts={}
 
 
+            #if (name == "OverallManager"):
+            #    print(dataarr)
 
-            #every scripts has alway one ocurrent when defining the class
-            if count >0:
 
-
-                 # and we obviosuly need to add the edge to our graph
-                G.add_edge(name,othername,weight=count)
-
-                if hasaway:
-                    G.get_edge(name,othername).attr['color']="yellow"
+            for i in range(len(dataarr)-1):
                 
-                nodeedges=nodeedges+count
 
-        
-        #check if is static
-        if data.find("public static class %s" % name)>-1:
-            G.get_node(name).attr['color']= "green"  
+                
 
-        edgecounter=edgecounter+nodeedges
+                flags.detector(dataarr[i],dataarr[i+1])                       
+            
+                #find any references to other scripts
+                if dataarr[i] in allTheNames:
+                    
+                    #createcount if donest exist
+                    if dataarr[i] not in counts:
+                        counts[dataarr[i]] = 0
 
-print(edgecounter)
-print("There are %d edges" % G.number_of_edges())
+                    
 
-#remove double edges
-#for edge in G.edges_iter():
-#    #if is double direction, put in one single arrow
-#    if G.has_edge(edge[1],edge[0]):
-#        
-#        G.add_edge(edge[1],edge[0],"double",dir="both")
-#        G.remove_edge(edge[0],edge[1])
+                    if flags.inlinecomment==False and flags.multilinecomment == False and flags.string==False:
+                        counts[dataarr[i]] = counts[dataarr[i]] + 1
+                    
+                        if dataarr[i] == name:
+                            counts[dataarr[i]] = counts[dataarr[i]] - 1
 
+                        if flags.inheritance==True:
+                            #print(counts[dataarr[i]])
+                            parents.append(dataarr[i])
 
-#remove lonely
-#for deg,node in zip(G.degree(),G.nodes()):
-#    if deg==0:
-#        G.remove_node(node)
-
-#adapt samehead and sametail according to rank
-        
-
-print("There are %d nodes" % G.number_of_nodes())
-print("There are %d edges" % G.number_of_edges())
-
-
-G.graph_attr['ranksep']="5.0"
-G.graph_attr['nodesep']="0.25"
-#G.graph_attr['shape']="box"
-#G.graph_attr['newrank']="true"
-G.graph_attr['concentrate']="true"
-SaveGraph(G,"normal","dot")
-
-n= bfs(G,"OverallManager",3)
-
-n=remove_duplicates(n)
-Sub =pgv.AGraph(strict=False,directed=True)
-Sub.add_nodes_from(n)
-Sub.add_edges_from(G.edges(n))
-Sub.graph_attr['ranksep']="5.0"
-Sub.graph_attr['nodesep']="0.25"
-
-SaveGraph(Sub,"sub","dot")
-print("There are %d nodes" % Sub.number_of_nodes())
+                    #uncount if is not in constructor 
 
 
 
+                    if dataarr[i+1]=="(" and flags.constructor==False:
+                        counts[dataarr[i]] = counts[dataarr[i]] -1
+                    
+                #dont count and change color if it is static instance
+                if data.find("public static %s instance" % dataarr[i])>-1:
+                    G.get_node(name).attr['color']= "blue"
+                    counts[dataarr[i]] = counts[dataarr[i]] -1
 
+            #print(name,parents)
+            for k in counts:
+                
+                
+                if counts[k] > 0:
+
+                    # and we obviosuly need to add the edge to our graph
+                    G.add_edge(name,k,weight=counts[k])
+
+                    #set parent relation
+                    if k in parents:
+
+                        G.get_edge(name,k).attr['color']="yellow"
+            
+            #check if is static
+            if data.find("public static class %s" % name)>-1:
+                G.get_node(name).attr['color']= "green"  
+
+            edgecounter=edgecounter+nodeedges
+
+    print(edgecounter)
+    print("There are %d edges" % G.number_of_edges())
+
+    G.graph_attr['ranksep']="5.0"
+    G.graph_attr['nodesep']="0.25"
+    #G.graph_attr['shape']="box"
+    #G.graph_attr['newrank']="true"
+    G.graph_attr['concentrate']="false"
+    SaveGraph(G,"normal","dot")
+
+
+
+
+
+if __name__ == "__main__":
+    main()
