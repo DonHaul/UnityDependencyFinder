@@ -1,9 +1,0 @@
-digraph  {
-	graph [nodesep=0.25,
-		ranksep=5.0
-	];
-	JoinTheDots -> GameRecnMake;
-	JoinTheDots -> Animater;
-	JoinTheDots -> GeneralManagerv2;
-	DetectCollision -> JoinTheDots;
-}
